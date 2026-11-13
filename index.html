@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Congklak Etnomatematika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --kayu:#7a4a24; --kayu2:#5a3318; --emas:#e3920f; --emas2:#f7c04a;
+  --krem:#fff6c9; --teks:#3b2210;
+
+  /* 1 satuan --u = 1% lebar layar 16:9 yang muat di perangkat.
+     Tombol & teks ikut membesar/mengecil sesuai perangkat, tanpa pita hitam. */
+  --u: calc(min(100vw, 177.78vh) / 100);
+
+  /* font ramah anak untuk teks materi (cadangan kalau offline: Comic Sans / sans-serif) */
+  --font-anak: "Fredoka","Baloo 2","Comic Sans MS","Chalkboard SE",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;font-family:Georgia,"Times New Roman",serif;color:var(--teks)}
+
+/* ===== BACKGROUND: memenuhi seluruh layar (ganti gambarmu di sini) ===== */
+body{ background:#fbeb9a url("img/bg.webp") center/cover no-repeat; }
+
+/* ===== BAR TOMBOL ===== */
+#bar{position:absolute;left:50%;bottom:7vh;transform:translateX(-50%);
+  display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*2.7);
+  /* tekstur kayu: gambar diulang ke samping; warna coklat jadi cadangan kalau gambar belum ada */
+  background:#6b4220 url("img/kayu.webp") repeat-x left center / auto 100%;
+  padding:calc(var(--u)*1.1) calc(var(--u)*3.1);
+  border-radius:4px;max-width:96vw}
+.tb{width:max(44px,calc(var(--u)*6.6));aspect-ratio:1;border:3px solid var(--emas2);border-radius:8px;
+  background:linear-gradient(#f0a41c,#d98a08);display:grid;place-items:center;cursor:pointer;
+  transition:transform .12s;box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.tb:active{transform:scale(.92)}
+.tb svg{width:62%;height:62%;fill:var(--krem)}
+.tb.besar{width:max(60px,calc(var(--u)*10));border-width:4px;margin:calc(var(--u)*-2.3) 0}
+.tb.besar svg{width:56%;height:56%}
+.tb:not(.mati) svg .coret{display:none}
+
+#keluar{position:absolute;top:2vh;right:1.5vw;width:max(40px,calc(var(--u)*4));z-index:20}
+
+/* ===== LAYAR MATERI ===== */
+#materi{position:fixed;inset:0;z-index:5;display:none;overflow:hidden;
+  background:#fbeb9a url("img/materi-bg.webp") center/cover no-repeat}
+#materi.buka{display:block}
+/* kotak 16:9 yang pas di layar; semua isi memakai satuan --u di dalamnya */
+#materiBox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:calc(var(--u)*100);height:calc(var(--u)*56.25);
+  background:url("img/materi-frame.webp") center/100% 100% no-repeat}
+#mJudulHal{position:absolute;left:calc(var(--u)*30.1);top:calc(var(--u)*1.25);width:calc(var(--u)*39.4);
+  height:calc(var(--u)*8.9);display:grid;place-items:center;text-align:center;
+  font:900 calc(var(--u)*4.6) "Arial Black","Arial Rounded MT Bold",Impact,sans-serif;letter-spacing:.06em;
+  color:#f9c31f;text-shadow:0 .08em 0 #3b2a1c}
+#mNav{position:absolute;left:calc(var(--u)*76.5);top:calc(var(--u)*2.2);display:flex;gap:calc(var(--u)*1)}
+#mJudul,#mTeks{transition:opacity .18s ease}
+#mJudul.pudar,#mTeks.pudar{opacity:0}
+@media (prefers-reduced-motion:reduce){#mJudul,#mTeks{transition:none}}
+.tb.nav{width:calc(var(--u)*4.6);min-width:36px}
+.tb.nav.bulat{border-radius:50%}
+.tb.nav.mati2{opacity:.4;pointer-events:none}
+#mJudul{position:absolute;left:calc(var(--u)*15);width:calc(var(--u)*70);top:calc(var(--u)*14.4);text-align:center;
+  font:700 calc(var(--u)*2.05) var(--font-anak);letter-spacing:.03em;text-transform:uppercase;color:#1a1a1a}
+#mTeks{position:absolute;left:calc(var(--u)*19.5);width:calc(var(--u)*61);top:calc(var(--u)*21.4);
+  max-height:calc(var(--u)*26);overflow-y:auto;text-align:justify;
+  font:600 calc(var(--u)*1.55)/1.6 var(--font-anak);color:#4a3a30}
+
+/* halaman padat (ada ikon + diagram): teks lebih kecil, rata kiri, naik sedikit */
+#materiBox.padat #mJudul{top:calc(var(--u)*13.2)}
+#materiBox.padat #mTeks{top:calc(var(--u)*17.6);max-height:calc(var(--u)*31);
+  font-size:calc(var(--u)*1.38);line-height:1.5;text-align:left;color:#2e2520}
+
+/* ikon bilangan: <i class="t p"></i> = plus, <i class="t m"></i> = minus */
+.t{display:inline-grid;place-items:center;width:1.25em;height:1.25em;border-radius:50%;box-sizing:border-box;
+  background:#e3920f;border:.12em solid #f7c04a;color:#fff;font-style:normal;font-weight:900;
+  font-size:.95em;line-height:1;vertical-align:-.28em}
+.t.p::before{content:"+"}
+.t.m::before{content:"\2212"}
+
+/* diagram contoh */
+.dia{display:flex;align-items:flex-end;justify-content:center;gap:1.3em;margin-top:1em}
+.dia .t{font-size:1.4em;vertical-align:baseline}
+.bl{display:flex;flex-direction:column;align-items:center;gap:.4em}
+.bl b{font-weight:600;min-height:1.3em;white-space:nowrap}
+.tk{display:flex;align-items:center;gap:.3em}
+.tk.g4{display:grid;grid-template-columns:repeat(2,auto)}
+.tk.op{font-size:1.8em;font-weight:700;line-height:1}
+.tk.kata{font-size:1.1em;font-weight:600}
+.ps{display:flex;flex-direction:column;gap:.2em;padding-left:.35em;border-left:.14em solid #d6262f}
+.kol{display:flex;flex-direction:column;gap:.3em}
+.ling{display:grid;grid-template-columns:repeat(2,auto);gap:.25em;justify-items:center;padding:.5em;
+  border:.14em solid #d6262f;border-radius:50%}
+.ling .t:nth-child(3){grid-column:1/3}
+.mer{color:#d6262f}
+.jadi{text-align:center;margin-top:.7em}
+
+/* ===== MODAL ===== */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;place-items:center;z-index:10}
+.modal.buka{display:grid}
+.kotak{background:var(--krem);border:4px solid var(--kayu);border-radius:12px;
+  width:min(92vw,calc(var(--u)*50));max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
+.kotak header{background:var(--kayu);color:#fff4d6;padding:.6em 1em;font-size:max(16px,calc(var(--u)*1.9));font-weight:bold}
+.isi{padding:1em 1.2em;overflow-y:auto;font-size:max(14px,calc(var(--u)*1.4));line-height:1.5;-webkit-overflow-scrolling:touch}
+.isi ol,.isi ul{padding-left:1.3em}
+.isi li{margin:.3em 0}
+.aksi{display:flex;gap:10px;justify-content:center;padding:10px;border-top:2px solid #e8d48a}
+.btn{background:var(--emas);color:#fff;border:2px solid var(--emas2);border-radius:8px;padding:.5em 1.6em;
+  font:bold max(14px,calc(var(--u)*1.4)) Georgia,serif;cursor:pointer}
+.btn:active{transform:scale(.95)}
+.btn.abu{background:#9a8a6a;border-color:#bbab8b}
+.profil-kolom{display:flex;gap:14px;align-items:center}
+.avatar{width:max(56px,calc(var(--u)*5.6));aspect-ratio:1;border-radius:50%;background:var(--emas);display:grid;place-items:center;flex:none}
+.avatar svg{width:60%;fill:var(--krem)}
+</style>
+</head>
+<body>
+
+<button class="tb" id="keluar" aria-label="Keluar" onclick="buka('mKeluar')">
+  <svg viewBox="0 0 24 24"><path d="M11 2h2v10h-2z"/><path d="M6.3 5.6l1.4 1.4A7 7 0 1 0 16.3 7l1.4-1.4A9 9 0 1 1 6.3 5.6z"/></svg>
+</button>
+
+<nav id="bar">
+  <button class="tb" aria-label="Materi" onclick="bukaMateri()">
+    <svg viewBox="0 0 24 24"><path d="M12 6C10 4.5 7 4 3 4v14c4 0 7 .5 9 2 2-1.500 5-2 9-2V4c-4 0-7 .5-9 2z"/></svg>
+  </button>
+  <button class="tb" aria-label="Aturan Main" onclick="buka('mAturan')">
+    <svg viewBox="0 0 24 24"><path d="M4 3h16v18H4zM7 7h10v2H7zm0 4h10v2H7zm0 4h7v2H7z" fill-rule="evenodd"/></svg>
+  </button>
+  <button class="tb besar" aria-label="Main" onclick="main()">
+    <svg viewBox="0 0 24 24"><path d="M7 3l14 9-14 9z"/></svg>
+  </button>
+  <button class="tb" id="tMusik" aria-label="Musik" onclick="toggleMusik()">
+    <svg viewBox="0 0 24 24"><path d="M9 3v11.3A3.5 3.5 0 1 0 11 17.500V8h7V3z"/><path class="coret" d="M3 3.500l1.400-1.400 17 17-1.400 1.400z"/></svg>
+  </button>
+  <button class="tb" aria-label="Profil" onclick="buka('mProfil')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.500"/><path d="M3 21c0-5 4-7.500 9-7.500s9 2.500 9 7.500z"/></svg>
+  </button>
+</nav>
+
+<!-- MATERI (layar penuh; yang berganti saat Prev/Next hanya teksnya) -->
+<div id="materi">
+  <div id="materiBox">
+    <h1 id="mJudulHal">MATERI</h1>
+    <div id="mNav">
+      <button class="tb nav" id="mPrev" aria-label="Sebelumnya" onclick="geser(-1)">
+        <svg viewBox="0 0 24 24"><path d="M16 4v16L5 12z"/></svg>
+      </button>
+      <button class="tb nav" id="mNext" aria-label="Berikutnya" onclick="geser(1)">
+        <svg viewBox="0 0 24 24"><path d="M8 4v16l11-8z"/></svg>
+      </button>
+      <button class="tb nav bulat" aria-label="Beranda" onclick="tutupMateri()">
+        <svg viewBox="0 0 24 24"><path d="M12 3L2 12h3v8h5v-5h4v5h5v-8h3z"/></svg>
+      </button>
+    </div>
+    <h2 id="mJudul"></h2>
+    <p id="mTeks"></p>
+  </div>
+</div>
+
+<!-- ATURAN MAIN -->
+<div class="modal" id="mAturan"><div class="kotak">
+  <header>Aturan Main</header>
+  <div class="isi">
+    <ol>
+      <li>(Aturan 1)</li>
+      <li>(Aturan 2)</li>
+    </ol>
+  </div>
+  <div class="aksi"><button class="btn" onclick="tutup('mAturan')">Tutup</button></div>
+</div></div>
+
+<!-- PROFIL -->
+<div class="modal" id="mProfil"><div class="kotak">
+  <header>Profil</header>
+  <div class="isi">
+    <div class="profil-kolom">
+      <div class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.500"/><path d="M3 21c0-5 4-7.500 9-7.500s9 2.500 9 7.500z"/></svg></div>
+      <div>
+        <b>Nama:</b> (isi nama)<br>
+        <b>Kelas:</b> (isi kelas)<br>
+        <b>Sekolah:</b> (isi sekolah)
+      </div>
+    </div>
+  </div>
+  <div class="aksi"><button class="btn" onclick="tutup('mProfil')">Tutup</button></div>
+</div></div>
+
+<!-- KELUAR -->
+<div class="modal" id="mKeluar"><div class="kotak" style="width:min(90vw,calc(var(--u)*34))">
+  <header>Keluar</header>
+  <div class="isi" style="text-align:center">Yakin ingin keluar dari permainan?</div>
+  <div class="aksi">
+    <button class="btn abu" onclick="tutup('mKeluar')">Tidak</button>
+    <button class="btn" onclick="keluar()">Ya</button>
+  </div>
+</div></div>
+
+<audio id="bgm" loop preload="none" src="audio/musik.mp3"></audio>
+
+<script>
+var $=function(i){return document.getElementById(i)};
+var bgm=$('bgm'), tM=$('tMusik'), musikOn=true;
+
+try{ if(localStorage.getItem('musik')==='off') musikOn=false }catch(e){}
+tM.classList.toggle('mati',!musikOn);
+
+function buka(id){$(id).classList.add('buka')}
+function tutup(id){$(id).classList.remove('buka')}
+
+/* ===== MATERI: ubah isi di sini. Tiap objek = 1 halaman (judul + teks) ===== */
+var P='<i class="t p"></i>', M='<i class="t m"></i>';           // ikon + dan - di dalam teks
+function T(n,k){ return new Array(n+1).join('<i class="t '+k+'"></i>') } // n ikon berderet
+var materi=[
+  {judul:'Operasi Hitung Bilangan Bulat',
+   teks:'Beberapa operasi hitung sederhana dalam bilangan bulat antara lain penjumlahan, pengurangan, perkalian, dan pembagian. Pada kesempatan kali ini kita akan belajar mengenai operasi hitung bilangan bulat pada penjumlahan dan pengurangan.'},
+  {judul:'Konsep Penjumlahan Bilangan Bulat', padat:true,
+   teks:'Simbol '+P+' untuk bilangan positif, dan simbol '+M+' untuk bilangan negatif<br>'+
+        'Catatan :<br>'+
+        '- Pasangan '+P+' dan '+M+' menyatakan bilangan nol<br>'+
+        '- Penjumlahan dengan nol tidak mengubah nilai (tetap)<br>'+
+        'Contoh: 4 + (-2) = .....'+
+        '<div class="dia">'+
+          '<div class="bl"><div class="tk g4">'+T(4,'p')+'</div><b>4</b></div>'+
+          '<div class="bl"><div class="tk op">+</div><b>+</b></div>'+
+          '<div class="bl"><div class="tk">'+T(2,'m')+'</div><b>(-2)</b></div>'+
+          '<div class="bl"><div class="tk op">&rArr;</div><b></b></div>'+
+          '<div class="bl"><div class="tk"><span class="ps">'+M+P+'</span><span class="ps">'+M+P+'</span>'+T(2,'p')+'</div><b>0&nbsp;&nbsp;&nbsp;0</b></div>'+
+          '<div class="bl"><div class="tk kata">hasil</div><b>=</b></div>'+
+          '<div class="bl"><div class="tk">'+T(2,'p')+'</div><b>2</b></div>'+
+        '</div>'+
+        '<div class="jadi">Jadi, 4 + (-2) = 2</div>'},
+  {judul:'Konsep Pengurangan Bilangan Bulat', padat:true,
+   teks:'Simbol '+P+' untuk bilangan positif, dan simbol '+M+' untuk bilangan negatif<br>'+
+        'Ingat kembali bahwa pasangan '+P+' dan '+M+' menyatakan bilangan 0<br>'+
+        'Contoh: 5 - 3 = .....'+
+        '<div class="dia">'+
+          '<div class="bl"><div class="tk"><div class="kol">'+T(2,'p')+'</div><div class="ling">'+T(3,'p')+'</div></div>'+
+            '<b>5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="mer">-3</span></b></div>'+
+          '<div class="bl"><div class="tk kata">sisa</div><b>=</b></div>'+
+          '<div class="bl"><div class="tk">'+T(2,'p')+'</div><b>2</b></div>'+
+        '</div>'+
+        '<div class="jadi">Jadi, 5 - 3 = 2</div>'}
+];
+var hal=0;
+function tampilMateri(){
+  $('mJudul').textContent=materi[hal].judul;
+  $('mTeks').innerHTML=materi[hal].teks;
+  $('materiBox').classList.toggle('padat',!!materi[hal].padat);
+  $('mTeks').scrollTop=0;
+  $('mPrev').classList.toggle('mati2',hal===0);
+  $('mNext').classList.toggle('mati2',hal===materi.length-1);
+}
+function bukaMateri(){
+  clearTimeout(tm); hal=0; tampilMateri();
+  $('mJudul').classList.remove('pudar'); $('mTeks').classList.remove('pudar');
+  $('materi').classList.add('buka');
+}
+function tutupMateri(){ $('materi').classList.remove('buka') }
+var tm;
+function geser(d){
+  var n=hal+d;
+  if(n<0||n>=materi.length) return;
+  hal=n;
+  clearTimeout(tm);
+  // fade-out -> ganti teks -> fade-in (hanya opacity, jadi ringan)
+  $('mJudul').classList.add('pudar'); $('mTeks').classList.add('pudar');
+  tm=setTimeout(function(){
+    tampilMateri();
+    $('mJudul').classList.remove('pudar'); $('mTeks').classList.remove('pudar');
+  },180);
+}
+
+function putar(){ if(musikOn && bgm.paused){ var p=bgm.play(); if(p&&p.catch)p.catch(function(){}) } }
+
+function toggleMusik(){
+  musikOn=!musikOn;
+  tM.classList.toggle('mati',!musikOn);
+  if(musikOn) putar(); else bgm.pause();
+  try{ localStorage.setItem('musik',musikOn?'on':'off') }catch(e){}
+}
+
+// WebView memblokir autoplay: musik mulai di sentuhan pertama
+document.addEventListener('pointerdown',putar,{once:true});
+
+function main(){
+  // TODO: pindah ke layar game, contoh: location.href='game.html';
+  alert('Mulai permainan! (sambungkan ke layar game kamu)');
+}
+
+function keluar(){
+  tutup('mKeluar');
+  bgm.pause();
+  window.close(); // hanya berhasil kalau tab dibuka lewat script
+  // browser biasanya menolak menutup tab sendiri, jadi tampilkan layar penutup
+  setTimeout(function(){
+    document.body.innerHTML='<div style="position:fixed;inset:0;display:grid;place-items:center;'+
+      'background:#2b1a0c;color:#fff4d6;font:bold 28px Georgia,serif;text-align:center;padding:20px">'+
+      'Terima kasih telah bermain!<br><small style="font-weight:normal;font-size:16px">Kamu boleh menutup tab ini.</small></div>';
+  },150);
+}
+</script>
+</body>
+</html>
